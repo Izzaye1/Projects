@@ -1,0 +1,85 @@
+import csv
+import re
+
+def is_valid_age(age):
+    return 12 <= age <= 120
+
+def is_valid_gender(gender):
+    return gender in ["male", "female", "non-binary"]
+
+def is_valid_email(email, existing_emails):
+    return "@" in email and "." in email and email not in existing_emails
+
+def file_operations(file_path, mode, data=None):
+    try:
+        with open(file_path, mode, newline='') as file:
+            if mode == 'r':
+                return list(csv.reader(file))
+            elif mode == 'a':
+                writer = csv.writer(file)
+                writer.writerow(data)
+    except FileNotFoundError:
+        print("File not found.")
+    except PermissionError:
+        print("Permission denied.")
+    except IOError:
+        print("An error occurred while accessing the file.")
+    except Exception as e:
+        print("An error occurred:", e)
+
+def register_member(existing_emails):
+    name = input("Enter your name: ")
+
+    while True:
+        try:
+            age = int(input("Enter your age: "))
+            if is_valid_age(age):
+                break
+            else:
+                print("Invalid age. Please enter a valid age.")
+        except ValueError:
+            print("Please input numbers only for age.")
+
+    while True:
+        gender = input("Enter your gender: (male/female/non-binary)").lower()
+        if is_valid_gender(gender):
+            break
+        print("Invalid gender. Please enter a valid gender.")
+
+    while True:
+        email = input("Enter your email for login: ").lower()
+        if is_valid_email(email, existing_emails):
+            break
+        print("Invalid email or email already taken. Please enter a valid email.")
+
+    existing_emails.add(email)  # Add the new email to the set
+    file_operations('marathon_registrations.csv', 'a', [name, age, gender, email])
+    print("Member successfully registered for the marathon!")
+
+def login_user(existing_emails):
+    login = input("Enter your email for login: ").lower()
+    
+    while not (re.match(r"[^@]+@[^@]+\.[^@]+", login) and login in existing_emails):
+        print("Invalid email format or email not found. Please try again.")
+        login = input("Enter your email for login: ").lower()
+
+    print("Login successful!")
+
+def main():
+    existing_emails = set()
+    registrations = file_operations('marathon_registrations.csv', 'r')
+    for row in registrations:
+        existing_emails.add(row[3])
+
+    while True:
+        choice = input("Do you want to register or login? (register/login/exit)").lower()
+        if choice == 'register':
+            register_member(existing_emails)
+        elif choice == 'login':
+            login_user(existing_emails)
+        elif choice == 'exit':
+            break
+
+if __name__ == "__main__":
+    main()
+
